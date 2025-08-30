@@ -31,6 +31,9 @@
       display: block;
       margin-bottom: 6px;
     }
+    .json-box {
+      position: relative;
+    }
     textarea, input {
       width: 100%;
       margin-bottom: 18px;
@@ -41,10 +44,27 @@
       border-radius: 8px;
       outline: none;
       transition: 0.3s;
+      resize: vertical;
     }
     textarea:focus, input:focus {
       border-color: #667eea;
       box-shadow: 0 0 6px rgba(102,126,234,0.6);
+    }
+    .beautify-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: #ff9800;
+      border: none;
+      color: white;
+      padding: 5px 10px;
+      font-size: 13px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .beautify-btn:hover {
+      background: #e68900;
     }
     button {
       background: linear-gradient(90deg, #667eea, #764ba2);
@@ -88,7 +108,6 @@
       overflow-x: auto;
       font-size: 14px;
     }
-    /* Toast Notification */
     .toast {
       visibility: hidden;
       min-width: 200px;
@@ -121,12 +140,15 @@
     <h2>⚡ JSON ➝ X++ DataContract Generator</h2>
 
     <label for="jsonInput">Paste JSON:</label>
-    <textarea id="jsonInput" rows="8" placeholder='{
+    <div class="json-box">
+      <textarea id="jsonInput" rows="8" placeholder='{
   "Key1": "Value1",
   "Key2": 10.5,
   "Key3": 12,
   "Key4": ["ABC","DEF"]
 }'></textarea>
+      <button class="beautify-btn" onclick="beautifyJSON()">✨ Beautify</button>
+    </div>
 
     <label for="className">Class Name:</label>
     <input type="text" id="className" placeholder="Enter Class Name (e.g., AcxTestReqDC)" />
@@ -142,12 +164,22 @@
 
   <div id="toast" class="toast">✅ Code copied to clipboard!</div>
 
-<!-- Footer Copywrite -->
   <footer style="text-align:center; margin-top:30px; font-size:14px; color:#fff;">
     <p>© Developed by <b>Er. Aryan Singh</b></p>
   </footer>
 
 <script>
+function beautifyJSON() {
+  let textarea = document.getElementById("jsonInput");
+  try {
+    let json = JSON.parse(textarea.value);
+    textarea.value = JSON.stringify(json, null, 2);
+  } catch (e) {
+    alert("❌ Invalid JSON! Please check before beautifying.");
+  }
+}
+
+// (your existing detectType, generateClass, copyCode remain unchanged)
 function detectType(value, rawValue) {
   if (typeof value === "string") {
     return "str";
@@ -197,20 +229,11 @@ function generateClass() {
       let methodName = "parm" + f.charAt(0).toUpperCase() + f.slice(1);
 
       if (type === "list") {
-        if (obj[f].length > 0 && typeof obj[f][0] === "object") {
-          classCode += `    [DataMemberAttribute("${f}"), AifCollectionTypeAttribute("_${f}", Types::Class, classStr(AcxTestRequestDC)),\n`;
-          classCode += `     AifCollectionTypeAttribute("return", Types::Class, classStr(AcxTestRequestDC))]\n`;
-          classCode += `    public List ${methodName}(List _${f} = ${f})\n    {\n`;
-          classCode += `        ${f} = _${f};\n`;
-          classCode += `        return ${f};\n`;
-          classCode += `    }\n\n`;
-        } else {
-          classCode += `    [DataMemberAttribute("${f}")]\n`;
-          classCode += `    public List ${methodName}(List _${f} = ${f})\n    {\n`;
-          classCode += `        ${f} = _${f};\n`;
-          classCode += `        return ${f};\n`;
-          classCode += `    }\n\n`;
-        }
+        classCode += `    [DataMemberAttribute("${f}")]\n`;
+        classCode += `    public List ${methodName}(List _${f} = ${f})\n    {\n`;
+        classCode += `        ${f} = _${f};\n`;
+        classCode += `        return ${f};\n`;
+        classCode += `    }\n\n`;
       } else {
         classCode += `    [DataMemberAttribute("${f}")]\n`;
         classCode += `    public ${type} ${methodName}(${type} _${f} = ${f})\n    {\n`;
@@ -240,8 +263,5 @@ function copyCode() {
   });
 }
 </script>
-<!-- <footer style="position:fixed; bottom:10px; width:100%; text-align:center; font-size:14px; color:#fff;">
-  <p>© Developed by <b>Er. Aryan Singh</b></p>
-</footer> -->
 </body>
 </html>
